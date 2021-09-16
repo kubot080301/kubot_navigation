@@ -1,0 +1,31 @@
+<launch>
+	<arg name="use_imu" default="false" doc="use imu in kubot"/>
+	<arg name="map_name" default="rd400.yaml" />
+	<arg name="open_rviz" default="false"/>
+	<arg name="local_planner" default="dwa" doc="local planner of dwa or teb" />
+
+	<include file="$(find kubot_bringup)/launch/robot.launch">
+		<arg name="use_imu" value="$(arg use_imu)"/>
+	</include>
+
+	<include file="$(find kubot_lidar)/launch/ira_lidar_example.launch"/>
+
+	<include file="$(find timed_roslaunch)/launch/timed_roslaunch.launch">
+		<arg name="time" value="2" />
+		<arg name="pkg" value="kubot_lidar" />
+		<arg name="file" value="lidar_filter.launch" />
+		<arg name="value" value="arg1:=1.2" />
+	</include>
+
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find kubot_navigation)/maps/$(arg map_name)"/>
+
+	<include file="$(find kubot_navigation)/launch/include/move_base.launch.xml">
+		<arg name="local_planner" default="$(arg local_planner)"/>
+	</include>
+
+	<include file="$(find kubot_navigation)/launch/include/amcl.launch.xml" />
+
+	<group if="$(arg open_rviz)">
+		<node name="rviz" pkg="rviz" type="rviz" args="-d $(find kubot_navigation)/rviz/view_navigation.rviz" />
+	</group>
+</launch>
